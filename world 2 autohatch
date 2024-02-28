@@ -1,0 +1,49 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage") :: ReplicatedStorage & {Library: ModuleScript; Network: ModuleScript & {Eggs_RequestPurchase: RemoteFunction}}
+local Workspace = game:GetService("Workspace") :: Workspace & {__THINGS: Folder & {Eggs: Folder}}
+local Things = Workspace.__THINGS
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer :: Player & {PlayerScripts: Folder & {Scripts: Folder & {Game: Folder & {["Egg Opening Frontend"]: LocalScript}}}, Character: Model & {HumanoidRootPart: Part}}
+local Library: {Save: {Get: () -> {MaximumAvailableEgg: number; EggHatchCount: number;}}}  = require(ReplicatedStorage.Library)
+local EggsUtilMod: {GetIdByNumber: (number) -> number} = require(ReplicatedStorage.Library.Util.EggsUtil)
+local EggNumber if getgenv().config.bestEggs then EggNumber = EggsUtilMod.GetMaximumEggNumber() elseif not getgenv().config.bestEggs then EggNumber = EggsUtilMod.GetIdByNumber(getgenv().config.customEgg) end
+local PlayerInfo = Library.Save.Get()
+local EggAnim : {PlayEggAnimation: () -> nil} = getsenv(Player.PlayerScripts.Scripts.Game["Egg Opening Frontend"])
+local Eggs: Folder = Things.Eggs:FindFirstChild("Main") or Things.Eggs:FindFirstChild("World2")
+local Egg = Eggs[EggNumber .. " - Egg Capsule"] :: Model & {Tier: Part}
+local BestEggName = EggsUtilMod.GetIdByNumber(EggNumber)
+local EggHatchCount = PlayerInfo.EggHatchCount
+local EggMod = require(ReplicatedStorage.__DIRECTORY.Eggs["Zone Eggs"]["World 2"]["Update 6"][tostring(EggNumber).." | "..BestEggName]) 
+local Teleport = Egg.Tier.CFrame
+
+hookfunction(EggAnim.PlayEggAnimation, function()
+	return
+end)
+
+function teleportToZone(ZoneFolder)
+	if ZoneFolder:FindFirstChild("INTERACT") then
+		local Max, BreakZone;
+		for i,v in pairs(ZoneFolder.INTERACT.BREAK_ZONES:GetChildren()) do
+			if not Max then Max = v.Size.X * v.Size.Y * v.Size.Z; end
+			if not BreakZone then BreakZone = v end
+
+			if Max < v.Size.X * v.Size.Y * v.Size.Z then
+				BreakZone = v
+			end
+		end
+		Player.Character.HumanoidRootPart.CFrame = BreakZone.CFrame * CFrame.new(0, 10, 0)
+	else
+		Player.Character.HumanoidRootPart.CFrame = ZoneFolder.PERSISTENT.Teleport.CFrame
+	end                    
+end
+
+while getgenv().config.autoHatch do task.wait(0.1)
+	local success, reason = ReplicatedStorage.Network.Eggs_RequestPurchase:InvokeServer(BestEggName, EggHatchCount)      
+	if not success and reason == "You are too far away from the egg!" then
+		Player.Character.HumanoidRootPart.CFrame = Teleport
+	elseif not success and reason == "You need more Coins to buy this egg!" then
+		local MaxZone, MaxZoneInfo = Library["ZoneCmds"].GetMaxOwnedZone()
+		teleportToZone(MaxZoneInfo.ZoneFolder)
+		repeat task.wait()
+		until Library.Balancing.CalcEggPrice(EggMod) * EggHatchCount * getgenv().config.minHatch <= Library["CurrencyCmds"].Get("TechCoins")
+	end
+end

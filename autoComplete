@@ -221,12 +221,24 @@ if getgenv().config.autoClaimMail then
 end
 
 spawn(function()
-	while getgenv().config.autoWorld do task.wait(60)
+	while getgenv().config.autoWorld do task.wait(30)
 		if rankMod.AllRewardsReady() then 
 			local claimCount = 1
 			while not rankMod.AllRewardsRedeemed() do
 				Library.Network.Fire("Ranks_ClaimReward", claimCount)
 				task.wait(1) claimCount = claimCount + 1
+			end
+		end
+		
+		if getgenv().config.stopAtRank then
+			if rankMod.GetMaxRank() and rankMod.GetMaxRank() >= getgenv().config.stopAtRankNum then 
+				getgenv().config.autoRanks = false
+			end
+		end
+		
+		if getgenv().config.stopAtRebirth then
+			if rbMod.Get() and rbMod.Get() >= getgenv().config.stopAtRebirthNum then
+				getgenv().config.autoRebirth = false
 			end
 		end
 	end

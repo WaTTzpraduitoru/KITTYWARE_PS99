@@ -1,0 +1,121 @@
+repeat task.wait() until game:IsLoaded()
+repeat task.wait() until game.PlaceId ~= nil
+repeat task.wait() until game:GetService("Players").LocalPlayer
+repeat task.wait() until not game.Players.LocalPlayer.PlayerGui:FindFirstChild("__INTRO")
+
+local RepStor = game.ReplicatedStorage
+local Player = game.Players.LocalPlayer
+local Library = require(RepStor.Library)
+local Network = game.ReplicatedStorage.Network
+local HttpService = game:GetService("HttpService")
+local ZoneDir = require(RepStor.Library.Directory.Zones)
+local saveMod = require(RepStor.Library.Client.Save).Get()
+local ZoneCmd = require(RepStor.Library.Client.ZoneCmds)
+local BreakMod = require(RepStor.Library.Client.BreakableCmds)
+local webURL = getgenv().webURL
+local Chests = {"Beach", "Underworld", "No Path Forest", "Heaven Gates"}
+local startTime = os.time()
+
+if game:IsLoaded() then
+	local autoOrbConnection = nil
+	local autoLootBagConnection = nil
+	for i, v in workspace.__THINGS.Orbs:GetChildren() do
+		Network["Orbs: Collect"]:FireServer({ tonumber(v.Name) })
+		Network["Orbs_ClaimMultiple"]:FireServer({ [1] = { [1] = v.Name } })
+		task.wait()
+		v:Destroy()            
+	end
+	for i, v in workspace.__THINGS.Lootbags:GetChildren() do
+		Network.Lootbags_Claim:FireServer({ v.Name })
+		task.wait()
+		v:Destroy()
+	end
+	autoOrbConnection = workspace.__THINGS.Orbs.ChildAdded:Connect(function(v)
+		Network["Orbs: Collect"]:FireServer({ tonumber(v.Name) })
+		Network["Orbs_ClaimMultiple"]:FireServer({ [1] = { [1] = v.Name } })
+		task.wait()
+		v:Destroy()
+	end)
+	autoLootBagConnection = workspace.__THINGS.Lootbags.ChildAdded:Connect(function(v)
+		Network.Lootbags_Claim:FireServer({ v.Name })
+		task.wait()
+		v:Destroy()
+	end)
+
+	hookfunction(require(game.ReplicatedStorage.Library.Client.PlayerPet).CalculateSpeedMultiplier,function() return 250 end)
+end
+
+function sendNotif(msg)
+	local message = {content = msg}
+	local jsonMessage = HttpService:JSONEncode(message)
+	local success, webMessage = pcall(function() 
+		HttpService:PostAsync(webURL, jsonMessage) 
+	end)
+	if not success then 
+		local response = request({Url = webURL,Method = "POST",Headers = {["Content-Type"] = "application/json"},Body = jsonMessage})
+	end
+end
+
+function teleportToZone(ZoneFolder)
+	if ZoneFolder:FindFirstChild("INTERACT") then
+		if ZoneFolder:FindFirstChild("INTERACT"):FindFirstChild("BREAKABLE_SPAWNS") then
+			Player.Character.HumanoidRootPart.CFrame = ZoneFolder.INTERACT.BREAKABLE_SPAWNS.Boss.CFrame * CFrame.new(0,10,0)
+		end
+	else
+		Player.Character.HumanoidRootPart.CFrame = ZoneFolder.PERSISTENT.Teleport.CFrame * CFrame.new(0,10,0) task.wait(.5) teleportToZone(ZoneFolder)
+	end                    
+end
+
+function getServer()
+	local servers = game.HttpService:JSONDecode(game:HttpGet('https://games.roblox.com/v1/games/' .. tostring(game.PlaceId) .. '/servers/Public?sortOrder=Asc&limit=100')).data
+	local server = servers[Random.new():NextInteger(1, 100)]
+	if server then return server else return getServer() end
+end
+
+function getMag(Pos1,Pos2)
+	return(Pos1.Position - Pos2.Position).Magnitude
+end
+
+for _, chest in ipairs(Chests) do
+	for zoneName, unlocked in pairs(saveMod.UnlockedZones) do
+		if zoneName == chest and unlocked then
+			for _,zonesTable in pairs(ZoneDir) do
+				if zonesTable.ZoneName == chest then
+					teleportToZone(zonesTable.ZoneFolder) task.wait(2)
+					local chestInRange = false
+					for i, v in pairs(workspace.__DEBRIS:GetChildren()) do
+						if v.Name == "host" and v:FindFirstChild("ChestTimer") and getMag(game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame, v.CFrame) <= 30 then
+							print(v.ChestTimer.Timer.Text)
+							chestInRange = true
+							break
+						end
+					end
+					if not chestInRange then
+						local chestCheck = BreakMod.AllByZoneAndClass(zonesTable.ZoneName, "Chest")
+						repeat task.wait() until next(chestCheck)
+						if next(chestCheck) then
+							for uuid, v in pairs(saveMod.EquippedPets) do
+								Network.Breakables_JoinPet:FireServer(next(chestCheck), v.euid)
+							end
+							repeat task.wait() print(next(chestCheck)) until not next(chestCheck)
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+local ChestGoals = {
+	stage1 = 150,
+	stage2 = 500,
+	stage3 = 1500,
+	stage4 = 5000 
+}
+
+local currentStage = saveMod.Achievements["Break Chests"].Stage
+local currentProgress = saveMod.Achievements["Break Chests"].Progress.."/"..tostring(ChestGoals["stage"..tostring(currentStage)])
+local endTime = os.time()
+local elapsed = endTime - startTime
+sendNotif("```diff\n+Server hopping: "..tostring(elapsed).." seconds | "..tostring(os.date("%H:%M")).."   \n+Current Progress: Stage "..tostring(currentStage).." | "..currentProgress.." ```")
+repeat game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, getServer().id, Player) task.wait(3) until not game.PlaceId

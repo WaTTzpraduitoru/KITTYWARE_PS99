@@ -257,7 +257,7 @@ while getgenv().config.autoWorld do task.wait()
 	end
 	
 	if getgenv().config.autoRebirth then
-		if rebirth.ZoneNumberRequired then
+		if rebirth and rebirth.ZoneNumberRequired then
 			if maxTable.ZoneNumber >= rebirth.ZoneNumberRequired then
 				local rebirthSuccess = Library.Network.Invoke("Rebirth_Request", tostring(rebirth.RebirthNumber))
 				if rebirthSuccess and getgenv().config.rebirthNotifs then

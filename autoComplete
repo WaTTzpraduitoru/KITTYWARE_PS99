@@ -246,12 +246,6 @@ while getgenv().config.autoWorld do task.wait()
 		end
 	end
 	
-	if getgenv().config.autoRanks then
-		for _,goal in pairs(Info("Goals")) do
-			completeQuest(goal)
-		end
-	end
-	
 	local maxName, maxTable = zoneMod.GetMaxOwnedZone()
 	local nextName, nextTable = zoneMod.GetNextZone()
 	local rebirth = rbMod.GetNextRebirth()
@@ -263,11 +257,19 @@ while getgenv().config.autoWorld do task.wait()
 	end
 	
 	if getgenv().config.autoRebirth then
-		if maxTable.ZoneNumber >= rebirth.ZoneNumberRequired then
-			local rebirthSuccess = Library.Network.Invoke("Rebirth_Request", tostring(rebirth.RebirthNumber))
-			if rebirthSuccess and getgenv().config.rebirthNotifs then
-				sendNotif("```diff\n+ "..Player.Name.." has made it to rebirth "..tostring(rebirth.RebirthNumber).." | "..tostring(os.date("%H:%M")).." \n```")
+		if rebirth.ZoneNumberRequired then
+			if maxTable.ZoneNumber >= rebirth.ZoneNumberRequired then
+				local rebirthSuccess = Library.Network.Invoke("Rebirth_Request", tostring(rebirth.RebirthNumber))
+				if rebirthSuccess and getgenv().config.rebirthNotifs then
+					sendNotif("```diff\n+ "..Player.Name.." has made it to rebirth "..tostring(rebirth.RebirthNumber).." | "..tostring(os.date("%H:%M")).." \n```")
+				end
 			end
+		end
+	end
+	
+	if getgenv().config.autoRanks then
+		for _,goal in pairs(Info("Goals")) do
+			completeQuest(goal)
 		end
 	end
 end

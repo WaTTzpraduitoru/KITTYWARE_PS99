@@ -259,9 +259,13 @@ while getgenv().config.autoWorld do task.wait()
 	end
 	
 	local maxName, maxTable = zoneMod.GetMaxOwnedZone()
+	if maxTable.ZoneNumber > 99 and game.PlaceId == 8737899170 then 
+		game.ReplicatedStorage.Network.World2Teleport:InvokeServer()
+	end
+	
 	local nextName, nextTable = zoneMod.GetNextZone()
 	local rebirth = rbMod.GetNextRebirth()
-	if not mapMod.IsInDottedBox() then
+	if not mapMod.IsInDottedBox() or mapMod.GetCurrentZone() ~= maxTable._id then
 		teleportToZone(maxTable.ZoneFolder)
 	end
 	

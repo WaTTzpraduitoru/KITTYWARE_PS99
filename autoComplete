@@ -264,17 +264,17 @@ while getgenv().config.autoWorld do task.wait()
 	end
 	
 	local maxName, maxTable = zoneMod.GetMaxOwnedZone()
-	local nextName, nextTable = zoneMod.GetNextZone()
-	local rebirth = rbMod.GetNextRebirth()
-	if not mapMod.IsInDottedBox() then
-		teleportToZone(maxTable.ZoneFolder)
+	teleportToZone(maxTable.ZoneFolder)
+	if maxTable.ZoneNumber > 99 and game.PlaceId == 8737899170 then 
+		game.ReplicatedStorage.Network.World2Teleport:InvokeServer()
 	end
 	
+	local nextName, nextTable = zoneMod.GetNextZone()
+	local rebirth = rbMod.GetNextRebirth()
 	local purchaseSuccess = Library.Network.Invoke("Zones_RequestPurchase", nextTable.ZoneName)
 	if purchaseSuccess and getgenv().config.progressNotifs then
 		sendNotif("```diff\n+ "..Player.Name.." has unlocked "..nextTable.ZoneName.." | "..tostring(os.date("%H:%M")).." \n```")	
 	end
-	
 	if getgenv().config.autoRebirth then
 		if rebirth and rebirth.ZoneNumberRequired then
 			if maxTable.ZoneNumber >= rebirth.ZoneNumberRequired then
@@ -285,7 +285,6 @@ while getgenv().config.autoWorld do task.wait()
 			end
 		end
 	end
-	
 	if getgenv().config.autoRanks then
 		for _,goal in pairs(Info("Goals")) do
 			completeQuest(goal)

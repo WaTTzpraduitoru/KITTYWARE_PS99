@@ -1,7 +1,14 @@
 --[[
+
+
+
 made by @nazov on discord :)
+
 fork if you want just don't 
-resell this script u loser
+resell this script u loser!!
+
+
+
 ]]
 repeat task.wait(1) until game.PlaceId ~= nil
 repeat task.wait(1) until game:GetService("Players") and game:GetService("Players").LocalPlayer
@@ -30,12 +37,10 @@ local worldCurrency if worldName == "World 1" then worldCurrency = "Coins" elsei
 local eggLocal = getsenv(Player.PlayerScripts.Scripts.Game["Egg Opening Frontend"])
 hookfunction(eggLocal.PlayEggAnimation, function() return end)
 hookfunction(require(game.ReplicatedStorage.Library.Client.PlayerPet).CalculateSpeedMultiplier, function() return 250 end)
---
-game:GetService("Players").LocalPlayer.Idled:connect(function()
-	game:GetService("VirtualUser"):Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-	wait(1)
-	game:GetService("VirtualUser"):Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-end)
+--anti afk :kek:
+for k,v in getconnections(Player.Idled) do
+	v:Disable()
+end
 Player.PlayerScripts.Scripts.Core["Idle Tracking"].Enabled = false
 Player.PlayerScripts.Scripts.Core["Server Closing"].Enabled = false
 --table.foreach(tabsMod, print)
@@ -259,13 +264,9 @@ while getgenv().config.autoWorld do task.wait()
 	end
 	
 	local maxName, maxTable = zoneMod.GetMaxOwnedZone()
-	if maxTable.ZoneNumber > 99 and game.PlaceId == 8737899170 then 
-		game.ReplicatedStorage.Network.World2Teleport:InvokeServer()
-	end
-	
 	local nextName, nextTable = zoneMod.GetNextZone()
 	local rebirth = rbMod.GetNextRebirth()
-	if not mapMod.IsInDottedBox() or mapMod.GetCurrentZone() ~= maxTable._id then
+	if not mapMod.IsInDottedBox() then
 		teleportToZone(maxTable.ZoneFolder)
 	end
 	

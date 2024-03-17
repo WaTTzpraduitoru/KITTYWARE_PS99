@@ -57,6 +57,8 @@ function teleportToZone(ZoneFolder) -- If needing to Teleport to specific zone c
 		end
 	elseif ZoneFolder.PERSISTENT.Teleport then
 		Player.Character.HumanoidRootPart.CFrame = ZoneFolder.PERSISTENT.Teleport.CFrame * CFrame.new(0, 10, 0)
+		task.wait(5)
+		teleportToZone(ZoneFolder)
 	end
 end
 function sendNotif(msg)

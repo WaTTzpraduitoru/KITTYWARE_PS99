@@ -40,7 +40,7 @@ while getgenv().config.autoTrade do task.wait(getgenv().config.tradeTimer)
 						if getgenv().config.debugPrints then print("Added:",Item._data.id,"to items to trade.") end
 						table.insert(itemsToTrade, {["Class"] = Class, ["uid"] = uid, ["Item"] = Item})
 					end
-				elseif not RAP and Item._data.id == "Diamonds" and Item._data._am >= getgenv().config.minimumRAP then
+				elseif not RAP and Class == "Currency" and Item._data.id == "Diamonds" and Item._data._am >= getgenv().config.minimumRAP then
 					if not table.find(itemsToTrade, {Class, uid, Item}) then
 						if getgenv().config.debugPrints then print("Added:",Item._data.id,"to items to trade.") end
 						table.insert(itemsToTrade, {["Class"] = Class, ["uid"] = uid, ["Item"] = Item})

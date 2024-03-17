@@ -13,7 +13,6 @@ resell this script u loser!!
 repeat task.wait(1) until game.PlaceId ~= nil
 repeat task.wait(1) until game:GetService("Players") and game:GetService("Players").LocalPlayer
 repeat task.wait(1) until not game.Players.LocalPlayer.PlayerGui:FindFirstChild("__INTRO")
-
 local HttpService = game.HttpService
 local RepStor = game.ReplicatedStorage
 local Library = require(RepStor.Library)
@@ -37,13 +36,13 @@ local worldCurrency if worldName == "World 1" then worldCurrency = "Coins" elsei
 local eggLocal = getsenv(Player.PlayerScripts.Scripts.Game["Egg Opening Frontend"])
 hookfunction(eggLocal.PlayEggAnimation, function() return end)
 hookfunction(require(game.ReplicatedStorage.Library.Client.PlayerPet).CalculateSpeedMultiplier, function() return 250 end)
---anti afk :kek:
+--
 for k,v in getconnections(Player.Idled) do
 	v:Disable()
 end
 Player.PlayerScripts.Scripts.Core["Idle Tracking"].Enabled = false
 Player.PlayerScripts.Scripts.Core["Server Closing"].Enabled = false
---table.foreach(tabsMod, print)
+--table.foreach(mapMod, print)
 function getActive() return workspace.__THINGS.__INSTANCE_CONTAINER.Active:GetChildren()[1] end
 function Info(name) return saveMod.Get()[name] end 
 function Open(tabName) return tabsMod.OpenTab(tabName) end
@@ -257,39 +256,36 @@ while getgenv().config.autoWorld do task.wait()
 		firetouchinterest(HRP, Instances["StairwayToHeaven"].Teleports.Leave, 1)
 		firetouchinterest(HRP, Instances["StairwayToHeaven"].Teleports.Leave, 0)
 	end
-	
+
 	if getgenv().config.autoPetSlots then
 		if currencyMod.Get("Diamonds") > Library.Balancing.CalcPetSlotPrice(Info("PetSlotsPurchased") + 1) and Info("PetSlotsPurchased") < rankMod.GetMaxPurchasableEquipSlots() and Info("UnlockedZones")["Green Forest"] then
 			teleportToZone(mapUtil.GetZone("Green Forest"))
 			Library.Network.Invoke("EquipSlotsMachine_RequestPurchase", (Info("PetSlotsPurchased") + 1))
 		end
 	end
-	
-	local maxName, maxTable = zoneMod.GetMaxOwnedZone()
-	teleportToZone(maxTable.ZoneFolder)
-	if maxTable.ZoneNumber > 99 and game.PlaceId == 8737899170 then 
-		game.ReplicatedStorage.Network.World2Teleport:InvokeServer()
+
+	if getgenv().config.autoRanks then
+		for _,goal in pairs(Info("Goals")) do
+			completeQuest(goal)
+		end
 	end
-	
+
+	local maxName, maxTable = zoneMod.GetMaxOwnedZone()
 	local nextName, nextTable = zoneMod.GetNextZone()
 	local rebirth = rbMod.GetNextRebirth()
+	teleportToZone(maxTable.ZoneFolder)
+
 	local purchaseSuccess = Library.Network.Invoke("Zones_RequestPurchase", nextTable.ZoneName)
 	if purchaseSuccess and getgenv().config.progressNotifs then
 		sendNotif("```diff\n+ "..Player.Name.." has unlocked "..nextTable.ZoneName.." | "..tostring(os.date("%H:%M")).." \n```")	
 	end
+
 	if getgenv().config.autoRebirth then
-		if rebirth and rebirth.ZoneNumberRequired then
-			if maxTable.ZoneNumber >= rebirth.ZoneNumberRequired then
-				local rebirthSuccess = Library.Network.Invoke("Rebirth_Request", tostring(rebirth.RebirthNumber))
-				if rebirthSuccess and getgenv().config.rebirthNotifs then
-					sendNotif("```diff\n+ "..Player.Name.." has made it to rebirth "..tostring(rebirth.RebirthNumber).." | "..tostring(os.date("%H:%M")).." \n```")
-				end
+		if maxTable.ZoneNumber >= rebirth.ZoneNumberRequired then
+			local rebirthSuccess = Library.Network.Invoke("Rebirth_Request", tostring(rebirth.RebirthNumber))
+			if rebirthSuccess and getgenv().config.rebirthNotifs then
+				sendNotif("```diff\n+ "..Player.Name.." has made it to rebirth "..tostring(rebirth.RebirthNumber).." | "..tostring(os.date("%H:%M")).." \n```")
 			end
-		end
-	end
-	if getgenv().config.autoRanks then
-		for _,goal in pairs(Info("Goals")) do
-			completeQuest(goal)
 		end
 	end
 end

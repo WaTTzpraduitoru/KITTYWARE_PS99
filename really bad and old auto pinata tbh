@@ -1,0 +1,101 @@
+local Player = game.Players.LocalPlayer
+local Network = game.ReplicatedStorage.Network
+local Lib = require(game.ReplicatedStorage.Library)
+local BreakMod = require(game.ReplicatedStorage.Library.Client.BreakableCmds)
+local SaveMod = require(game.ReplicatedStorage.Library.Client.Save).Get()
+local itemID = "silly me"
+
+for ID,v in pairs(SaveMod.Inventory.Misc) do
+	if v.id == getgenv().MoneyPrinter.itemName then
+		itemID = ID
+		break
+	end
+end
+
+local autoOrbConnection = nil
+local autoLootBagConnection = nil
+for i, v in workspace.__THINGS.Orbs:GetChildren() do
+	Network["Orbs: Collect"]:FireServer({ tonumber(v.Name) })
+	Network["Orbs_ClaimMultiple"]:FireServer({ [1] = { [1] = v.Name } })
+	task.wait()
+	v:Destroy()            
+end
+for i, v in workspace.__THINGS.Lootbags:GetChildren() do
+	Network.Lootbags_Claim:FireServer({ v.Name })
+	task.wait()
+	v:Destroy()
+end
+autoOrbConnection = workspace.__THINGS.Orbs.ChildAdded:Connect(function(v)
+	Network["Orbs: Collect"]:FireServer({ tonumber(v.Name) })
+	Network["Orbs_ClaimMultiple"]:FireServer({ [1] = { [1] = v.Name } })
+	task.wait()
+	v:Destroy()
+end)
+autoLootBagConnection = workspace.__THINGS.Lootbags.ChildAdded:Connect(function(v)
+	Network.Lootbags_Claim:FireServer({ v.Name })
+	task.wait()
+	v:Destroy()
+end)
+
+hookfunction(require(game.ReplicatedStorage.Library.Client.PlayerPet).CalculateSpeedMultiplier,function() return 250 end)
+
+Player.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(-9975, 130, 779))
+
+function xTab(TABLE)
+	for i,v in pairs(TABLE) do
+		if type(v) == "function" then
+			TABLE[i] = function(...) return end
+		end
+		if type(v) == "table" then
+			xTab(v)
+		end
+	end
+end
+xTab(Lib.WorldFX)
+xTab(Lib.NotificationCmds.Item)
+
+local BagNames = {"Gift Bag", "Large Gift Bag", "Toy Bundle", "Potion Bundle", "Flag Bundle", "Enchant Bundle", "Mini Chest"}
+function GiftBagOpen()
+	for i,v in pairs(BagNames) do
+		Network.GiftBag_Open:InvokeServer(v)
+	end
+end
+
+local virtualuser = game:GetService("VirtualUser")
+game:GetService("Players").LocalPlayer.Idled:Connect(function()
+	virtualuser:CaptureController()
+	virtualuser:ClickButton2(Vector2.new())
+end)
+game.Players.LocalPlayer.PlayerScripts.Scripts.Core["Idle Tracking"].Enabled = false
+game.Players.LocalPlayer.PlayerScripts.Scripts.Core["Server Closing"].Enabled = false
+
+if getgenv().MoneyPrinter.autoOpen then
+	spawn(function()
+		while getgenv().MoneyPrinter.autoOpen do
+			if not getgenv().MoneyPrinter.autoOpen then
+				break
+			end
+			GiftBagOpen()
+		end
+	end)
+end
+
+while getgenv().MoneyPrinter.autoFarm do task.wait(1)
+	local success, reason = Network.MiniPinata_Consume:InvokeServer(itemID)
+	if reason == "There is already something in this area!" then
+		local Normal = BreakMod.AllByZoneAndClass("Cyber Base Camp", "Normal")
+		local Special = BreakMod.AllByZoneAndClass("Cyber Base Camp", "Chest")
+		local Coin = next(Normal)
+		local Pina = next(Special)
+		if Pina then
+			Network.Breakables_PlayerDealDamage:FireServer(Pina)
+			for uuid, v in pairs(SaveMod.EquippedPets) do
+				if Pina then
+					Network.Breakables_JoinPet:FireServer(Pina, v.euid)
+				else
+					Network.Breakables_JoinPet:FireServer(Coin, v.euid)
+				end
+			end
+		end
+	end
+end

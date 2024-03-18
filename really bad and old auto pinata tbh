@@ -39,7 +39,7 @@ end)
 
 hookfunction(require(game.ReplicatedStorage.Library.Client.PlayerPet).CalculateSpeedMultiplier,function() return 250 end)
 
-Player.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(-9975, 130, 779))
+Player.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(-10378.041015625, 14.9893159866333, 2267.81982421875))
 
 function xTab(TABLE)
 	for i,v in pairs(TABLE) do
